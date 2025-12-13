@@ -42,7 +42,7 @@ export const sendFriendRequest = async (req, res) => {
                 existingFriend.status = 'pending';
                 existingFriend.requestedBy = userId;
                 await existingFriend.save();
-                
+
                 return res.status(200).json({
                     message: "Friend request sent successfully",
                     friendRequest: existingFriend
@@ -63,7 +63,6 @@ export const sendFriendRequest = async (req, res) => {
             friendRequest
         });
     } catch (error) {
-        console.error("Error sending friend request:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -98,7 +97,6 @@ export const acceptFriendRequest = async (req, res) => {
             friendRequest
         });
     } catch (error) {
-        console.error("Error accepting friend request:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -123,12 +121,11 @@ export const rejectFriendRequest = async (req, res) => {
         friendRequest.status = 'rejected';
         await friendRequest.save();
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             message: "Friend request rejected",
             friendRequest
         });
     } catch (error) {
-        console.error("Error rejecting friend request:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -144,30 +141,30 @@ export const getFriendsList = async (req, res) => {
                 { userId, status: 'accepted' },
                 { friendId: userId, status: 'accepted' }
             ]
-        }).populate('userId friendId', 'username name email');
+        }).populate('userId friendId', 'username name email profileImage');
 
         // Extract friend details
         const friends = friendships.map(friendship => {
             // Compare ObjectIds as strings to identify the other person
             const isUserIdMatch = friendship.userId._id.toString() === userId.toString();
             const friend = isUserIdMatch ? friendship.friendId : friendship.userId;
-            
+
             return {
                 _id: friend._id,
                 username: friend.username,
                 name: friend.name,
                 email: friend.email,
+                profileImage: friend.profileImage,
                 friendshipId: friendship._id,
                 since: friendship.updatedAt
             };
         });
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             count: friends.length,
             friends
         });
     } catch (error) {
-        console.error("Error fetching friends list:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -181,15 +178,15 @@ export const getPendingRequests = async (req, res) => {
         const pendingRequests = await Friend.find({
             friendId: userId,
             status: 'pending'
-        }).populate('userId', 'username name email');
+        }).populate('userId', 'username name email profileImage');
 
         // Find all pending requests sent by the user
         const sentRequests = await Friend.find({
             userId,
             status: 'pending'
-        }).populate('friendId', 'username name email');
+        }).populate('friendId', 'username name email profileImage');
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             received: pendingRequests.map(req => ({
                 _id: req._id,
                 from: {
@@ -212,7 +209,6 @@ export const getPendingRequests = async (req, res) => {
             }))
         });
     } catch (error) {
-        console.error("Error fetching pending requests:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -233,11 +229,11 @@ export const searchFriends = async (req, res) => {
                 { userId, status: 'accepted' },
                 { friendId: userId, status: 'accepted' }
             ]
-        }).populate('userId friendId', 'username name email');
+        }).populate('userId friendId', 'username name email profileImage');
 
         // Extract friend IDs
         const friendIds = friendships.map(friendship => {
-            return friendship.userId._id.toString() === userId 
+            return friendship.userId._id.toString() === userId
                 ? friendship.friendId._id.toString()
                 : friendship.userId._id.toString();
         });
@@ -245,12 +241,12 @@ export const searchFriends = async (req, res) => {
         // Search within friends by username (case-insensitive partial match)
         const searchResults = friendships
             .map(friendship => {
-                const friend = friendship.userId._id.toString() === userId 
-                    ? friendship.friendId 
+                const friend = friendship.userId._id.toString() === userId
+                    ? friendship.friendId
                     : friendship.userId;
                 return friend;
             })
-            .filter(friend => 
+            .filter(friend =>
                 friend.username.toLowerCase().includes(username.toLowerCase())
             )
             .map(friend => ({
@@ -260,12 +256,11 @@ export const searchFriends = async (req, res) => {
                 email: friend.email
             }));
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             count: searchResults.length,
             friends: searchResults
         });
     } catch (error) {
-        console.error("Error searching friends:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -292,7 +287,6 @@ export const removeFriend = async (req, res) => {
             message: "Friend removed successfully"
         });
     } catch (error) {
-        console.error("Error removing friend:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };

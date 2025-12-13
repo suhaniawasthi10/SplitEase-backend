@@ -57,14 +57,13 @@ export const createGroup = async (req, res) => {
             description: `Created group: ${group.name}`
         });
 
-        const populatedGroup = await Group.findById(group._id).populate('members.userId', 'username name email');
+        const populatedGroup = await Group.findById(group._id).populate('members.userId', 'username name email profileImage');
 
         return res.status(201).json({
             message: "Group created successfully",
             group: populatedGroup
         });
     } catch (error) {
-        console.error("Error creating group:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -76,14 +75,13 @@ export const getGroups = async (req, res) => {
     try {
         const groups = await Group.find({
             'members.userId': userId
-        }).populate('members.userId', 'username name email');
+        }).populate('members.userId', 'username name email profileImage');
 
         return res.status(200).json({
             count: groups.length,
             groups
         });
     } catch (error) {
-        console.error("Error fetching groups:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -94,7 +92,7 @@ export const getGroupDetails = async (req, res) => {
     const userId = req.userId;
 
     try {
-        const group = await Group.findById(groupId).populate('members.userId', 'username name email');
+        const group = await Group.findById(groupId).populate('members.userId', 'username name email profileImage');
 
         if (!group) {
             return res.status(404).json({ message: "Group not found" });
@@ -109,21 +107,25 @@ export const getGroupDetails = async (req, res) => {
         // Calculate total expenses for this group
         const expenseStats = await Expense.aggregate([
             { $match: { groupId: new mongoose.Types.ObjectId(groupId) } },
-            { $group: {
-                _id: null,
-                totalExpenses: { $sum: '$amount' },
-                expenseCount: { $sum: 1 }
-            }}
+            {
+                $group: {
+                    _id: null,
+                    totalExpenses: { $sum: '$amount' },
+                    expenseCount: { $sum: 1 }
+                }
+            }
         ]);
 
         // Calculate total settlements for this group
         const settlementStats = await Settlement.aggregate([
             { $match: { groupId: new mongoose.Types.ObjectId(groupId) } },
-            { $group: {
-                _id: null,
-                totalSettlements: { $sum: '$amount' },
-                settlementCount: { $sum: 1 }
-            }}
+            {
+                $group: {
+                    _id: null,
+                    totalSettlements: { $sum: '$amount' },
+                    settlementCount: { $sum: 1 }
+                }
+            }
         ]);
 
         // Get user's balance summary for this group
@@ -158,7 +160,7 @@ export const getGroupDetails = async (req, res) => {
             }
         });
 
-        return res.status(200).json({ 
+        return res.status(200).json({
             group,
             stats: {
                 totalExpenses: expenseStats[0]?.totalExpenses || 0,
@@ -174,7 +176,6 @@ export const getGroupDetails = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error("Error fetching group details:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -212,14 +213,13 @@ export const updateGroup = async (req, res) => {
             description: `Updated group: ${group.name}`
         });
 
-        const updatedGroup = await Group.findById(groupId).populate('members.userId', 'username name email');
+        const updatedGroup = await Group.findById(groupId).populate('members.userId', 'username name email profileImage');
 
         return res.status(200).json({
             message: "Group updated successfully",
             group: updatedGroup
         });
     } catch (error) {
-        console.error("Error updating group:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -256,7 +256,6 @@ export const deleteGroup = async (req, res) => {
             message: "Group deleted successfully"
         });
     } catch (error) {
-        console.error("Error deleting group:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -282,8 +281,8 @@ export const leaveGroup = async (req, res) => {
         // Check if user is owner
         const member = group.members[memberIndex];
         if (member.role === 'owner') {
-            return res.status(400).json({ 
-                message: "Owner cannot leave the group. Transfer ownership or delete the group instead." 
+            return res.status(400).json({
+                message: "Owner cannot leave the group. Transfer ownership or delete the group instead."
             });
         }
 
@@ -303,7 +302,6 @@ export const leaveGroup = async (req, res) => {
             message: "Left group successfully"
         });
     } catch (error) {
-        console.error("Error leaving group:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -323,8 +321,8 @@ export const addMemberFromFriendList = async (req, res) => {
 
         // Check if user can invite members
         if (!canInviteMembers(group, userId)) {
-            return res.status(403).json({ 
-                message: "You don't have permission to add members to this group" 
+            return res.status(403).json({
+                message: "You don't have permission to add members to this group"
             });
         }
 
@@ -365,14 +363,13 @@ export const addMemberFromFriendList = async (req, res) => {
             description: `Added ${friend.username} to group: ${group.name}`
         });
 
-        const updatedGroup = await Group.findById(groupId).populate('members.userId', 'username name email');
+        const updatedGroup = await Group.findById(groupId).populate('members.userId', 'username name email profileImage');
 
         return res.status(200).json({
             message: "Member added successfully",
             group: updatedGroup
         });
     } catch (error) {
-        console.error("Error adding member:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -392,8 +389,8 @@ export const generateEmailInvite = async (req, res) => {
 
         // Check if user can invite members
         if (!canInviteMembers(group, userId)) {
-            return res.status(403).json({ 
-                message: "You don't have permission to invite members to this group" 
+            return res.status(403).json({
+                message: "You don't have permission to invite members to this group"
             });
         }
 
@@ -442,13 +439,10 @@ export const generateEmailInvite = async (req, res) => {
         sendGroupInviteEmail(email.toLowerCase(), group.name, inviter.name, inviteLink)
             .then(success => {
                 if (success) {
-                    console.log(`Invite email sent to ${email}`);
                 } else {
-                    console.log(`Failed to send invite email to ${email}, but invite created`);
                 }
             })
             .catch(err => {
-                console.error('Email sending error:', err);
             });
 
         return res.status(201).json({
@@ -461,7 +455,6 @@ export const generateEmailInvite = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error("Error generating invite:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -515,14 +508,13 @@ export const acceptInvite = async (req, res) => {
             description: `Joined group: ${group.name} via invite`
         });
 
-        const updatedGroup = await Group.findById(group._id).populate('members.userId', 'username name email');
+        const updatedGroup = await Group.findById(group._id).populate('members.userId', 'username name email profileImage');
 
         return res.status(200).json({
             message: "Successfully joined the group",
             group: updatedGroup
         });
     } catch (error) {
-        console.error("Error accepting invite:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -548,7 +540,6 @@ export const rejectInvite = async (req, res) => {
             message: "Invite rejected"
         });
     } catch (error) {
-        console.error("Error rejecting invite:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };
@@ -567,8 +558,8 @@ export const removeMember = async (req, res) => {
 
         // Check permissions
         if (!hasPermission(group, userId, ['owner', 'admin'])) {
-            return res.status(403).json({ 
-                message: "Only owner and admin can remove members" 
+            return res.status(403).json({
+                message: "Only owner and admin can remove members"
             });
         }
 
@@ -604,7 +595,6 @@ export const removeMember = async (req, res) => {
             message: "Member removed successfully"
         });
     } catch (error) {
-        console.error("Error removing member:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };

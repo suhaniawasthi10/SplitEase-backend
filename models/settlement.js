@@ -24,6 +24,20 @@ const settlementSchema = mongoose.Schema({
         default: null,
         index: true
     },
+    paymentMethod: {
+        type: String,
+        enum: ['cash', 'upi', 'bank_transfer', 'other'],
+        default: 'cash'
+    },
+    upiTransactionId: {
+        type: String,
+        default: null
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'completed', 'failed'],
+        default: 'completed' // Default to completed for backward compatibility
+    },
     note: {
         type: String,
         default: '',

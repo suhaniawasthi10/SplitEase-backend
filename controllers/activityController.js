@@ -39,7 +39,6 @@ export const getActivities = async (req, res) => {
             activities
         });
     } catch (error) {
-        console.error("Error fetching activities:", error);
         return res.status(500).json({ message: "Server error" });
     }
 };

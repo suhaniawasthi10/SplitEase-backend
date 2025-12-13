@@ -1,5 +1,5 @@
 import express from "express";
-import { 
+import {
     createExpense,
     editExpense,
     deleteExpense,
@@ -8,15 +8,17 @@ import {
     changePayer
 } from "../controllers/expenseController.js";
 import { isAuth } from "../middleware/auth.js";
+import { createLimiter } from "../middleware/rateLimiter.js";
+import { createExpenseValidation, mongoIdValidation } from "../middleware/validation.js";
 
 const router = express.Router();
 
 // All routes require authentication
-router.post('/', isAuth, createExpense);
-router.put('/:expenseId', isAuth, editExpense);
-router.put('/:expenseId/change-payer', isAuth, changePayer);
-router.delete('/:expenseId', isAuth, deleteExpense);
+router.post('/', isAuth, createLimiter, createExpenseValidation, createExpense);
+router.put('/:expenseId', isAuth, mongoIdValidation('expenseId'), editExpense);
+router.put('/:expenseId/change-payer', isAuth, mongoIdValidation('expenseId'), changePayer);
+router.delete('/:expenseId', isAuth, mongoIdValidation('expenseId'), deleteExpense);
 router.get('/', isAuth, getExpenses);
-router.get('/:expenseId', isAuth, getExpenseDetails);
+router.get('/:expenseId', isAuth, mongoIdValidation('expenseId'), getExpenseDetails);
 
 export default router;
