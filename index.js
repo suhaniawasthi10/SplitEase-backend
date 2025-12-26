@@ -44,6 +44,13 @@ import upiSettlementRoutes from './routes/upiSettlementRoutes.js';
 
 
 const app = express();
+
+// Trust proxy - required when running behind Nginx reverse proxy
+// This allows express-rate-limit to correctly identify users via X-Forwarded-For
+if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', 1);
+}
+
 connectDB();
 
 // Security middleware
