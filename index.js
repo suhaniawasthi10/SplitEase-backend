@@ -87,6 +87,11 @@ const server = app.listen(8002, () => {
 // Set request timeout to 30 seconds
 server.timeout = 30000;
 
+// Health check endpoint for deployment monitoring
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 app.get('/', (req, res) => {
     res.send('Hello from suhani')
 })

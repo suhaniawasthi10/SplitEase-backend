@@ -33,8 +33,8 @@ export const signUp = async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24 * 30,
-            sameSite: "lax",
-            secure: false // Set to false for local development (http://localhost)
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            secure: process.env.NODE_ENV === 'production'
         })
 
         // Return user without password
@@ -82,8 +82,8 @@ export const login = async (req, res) => {
         res.cookie("token", token, {
             httpOnly: true,
             maxAge: 1000 * 60 * 60 * 24 * 30,
-            sameSite: "lax",
-            secure: false // Set to false for local development (http://localhost)
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            secure: process.env.NODE_ENV === 'production'
         })
 
         // Return user without password
@@ -115,8 +115,8 @@ export const logout = async (req, res) => {
         res.cookie("token", "", {
             httpOnly: true,
             maxAge: 0,
-            sameSite: "lax",
-            secure: false // Set to false for local development (http://localhost)
+            sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+            secure: process.env.NODE_ENV === 'production'
         })
         return res.status(200).json({ message: "Logout successful" });
     } catch (error) {

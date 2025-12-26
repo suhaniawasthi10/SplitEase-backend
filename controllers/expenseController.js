@@ -161,7 +161,11 @@ export const createExpense = async (req, res) => {
 // ================= GET EXPENSES =================
 export const getExpenses = async (req, res) => {
   const userId = req.userId;
-  const { groupId, limit = 50, skip = 0 } = req.query;
+  const { groupId } = req.query;
+
+  // Validate and limit pagination parameters to prevent abuse
+  const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100
+  const skip = Math.max(parseInt(req.query.skip) || 0, 0); // Min 0
 
   try {
     const query = {};
